@@ -1,4 +1,4 @@
-package com.irsan.springbootbackend.model;
+package com.irsan.springbootbackend.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

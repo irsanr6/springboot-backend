@@ -1,6 +1,6 @@
 package com.irsan.springbootbackend.config;
 
-import com.irsan.springbootbackend.model.FieldErrorModel;
+import com.irsan.springbootbackend.utils.FieldErrorModel;
 import com.irsan.springbootbackend.utils.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
