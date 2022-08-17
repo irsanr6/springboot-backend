@@ -1,8 +1,10 @@
 package com.irsan.springbootbackend;
 
+import com.irsan.springbootbackend.entity.CronJobTrigger;
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeResponse;
+import com.irsan.springbootbackend.repository.CronJobTriggerRepository;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.Helper;
@@ -22,6 +24,8 @@ class SpringbootBackendApplicationTests {
     private EmployeeRepository employeeRepository;
     @Autowired
     private DataEmployeeRepository dataEmployeeRepository;
+    @Autowired
+    private CronJobTriggerRepository cronJobTriggerRepository;
 
     @Test
     void getAllEmployee() {
@@ -103,5 +107,11 @@ class SpringbootBackendApplicationTests {
             }
         }
         Helper.ok("Semua data telah di simpan");
+    }
+
+    @Test
+    void findCronValue() {
+        log.info("Cron: {}", cronJobTriggerRepository.findByCodeTrigger("AA").get().getCronValue());
+
     }
 }

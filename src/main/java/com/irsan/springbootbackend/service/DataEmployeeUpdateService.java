@@ -3,11 +3,14 @@ package com.irsan.springbootbackend.service;
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeResponse;
+import com.irsan.springbootbackend.repository.CronJobTriggerRepository;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +28,16 @@ public class DataEmployeeUpdateService {
 
     private final EmployeeRepository employeeRepository;
     private final DataEmployeeRepository dataEmployeeRepository;
+    private final CronJobTriggerRepository cronJobTriggerRepository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Jakarta")
+    @Bean
+    @Scheduled(cron = "#{@getCronValue}", zone = "Asia/Jakarta")
+    public String getCronValue() {
+        log.info("from trigger");
+        return cronJobTriggerRepository.findByCodeTrigger("AA").get().getCronValue();
+    }
+
+    @Scheduled(cron = "#{@getCronValue}", zone = "Asia/Jakarta")
     public void dataEmployeeUpdate() {
         List<Employee> employeeList = employeeRepository.findAll();
         for (Employee employee :
