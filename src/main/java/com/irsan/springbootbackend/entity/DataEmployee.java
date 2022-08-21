@@ -1,6 +1,6 @@
 package com.irsan.springbootbackend.entity;
 
-import com.irsan.springbootbackend.config.DataEmployeeAuditTrailListener;
+//import com.irsan.springbootbackend.listener.DataEmployeeAuditTrailListener;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +12,7 @@ import javax.persistence.*;
  * @author: Irsan Ramadhan
  * @email: irsan.ramadhan@iconpln.co.id
  */
-@EntityListeners(DataEmployeeAuditTrailListener.class)
+//@EntityListeners(DataEmployeeAuditTrailListener.class)
 @Entity
 @Table(schema = "db_localhost", name = "m_data_employee")
 @Data

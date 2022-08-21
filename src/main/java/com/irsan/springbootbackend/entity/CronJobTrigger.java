@@ -27,7 +27,5 @@ public class CronJobTrigger {
     private String cronValue;
     @Column(name = "code_trigger")
     private String codeTrigger;
-    @Column(name = "start_datetime")
-    private String startDateTime;
 
 }

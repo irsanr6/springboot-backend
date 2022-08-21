@@ -1,6 +1,5 @@
 package com.irsan.springbootbackend;
 
-import com.irsan.springbootbackend.entity.CronJobTrigger;
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeResponse;
@@ -13,8 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityManager;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SpringBootTest
 @Slf4j
@@ -26,6 +28,9 @@ class SpringbootBackendApplicationTests {
     private DataEmployeeRepository dataEmployeeRepository;
     @Autowired
     private CronJobTriggerRepository cronJobTriggerRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void getAllEmployee() {
@@ -113,5 +118,96 @@ class SpringbootBackendApplicationTests {
     void findCronValue() {
         log.info("Cron: {}", cronJobTriggerRepository.findByCodeTrigger("AA").get().getCronValue());
 
+    }
+
+    @Test
+    void loop() {
+        Long[] employeeId = {1L, 2l, 10L};
+
+        List<Employee> employees = new ArrayList<>();
+
+        for (Long id :
+                employeeId) {
+            log.info("employeeId {}", id);
+            employees.add(Optional.ofNullable(employeeRepository.findByEmployeeId(id)).map(Optional::get).orElseGet(null));
+        }
+        log.info("employee {}", employees);
+    }
+
+    @Test
+    void equalsCharSequenceString() {
+        CharSequence firstString = "baeldung";
+        String secondString = "baeldung";
+
+        if (firstString == secondString) {
+            log.info("equals");
+        } else {
+            log.info("not equals");
+        }
+    }
+
+    @Test
+    void testLagi() {
+        List<String> input = new LinkedList<>(Arrays.asList("a", "b", "c"));
+        List<CharSequence> result;
+
+//    result = input; // <-- Type mismatch: cannot convert from List<String> to List<CharSequence>
+        result = new ArrayList<>(input);
+
+        System.out.println(result);
+    }
+
+    @Test
+    void streamJoin() {
+        Stream<String> words = Arrays.asList("Irsan", "Ramadhan").stream();
+        String fullname = words.collect(Collectors.joining(" "));
+        log.info("Full Name: {}", fullname);
+    }
+
+    @Test
+    void mapInMap() {
+        Map<String, Map<Integer, String>> outerMap = new ConcurrentHashMap<>();
+        Map<Integer, String> innerMap = new ConcurrentHashMap<>();
+        innerMap.put(1, "one");
+        innerMap.put(2, "two");
+        innerMap.put(3, "three");
+        innerMap.put(4, "four");
+        innerMap.put(5, "five");
+        outerMap.put("1L", innerMap);
+        outerMap.put("2L", innerMap);
+        outerMap.put("3L", innerMap);
+        outerMap.put("4L", innerMap);
+        outerMap.put("5L", innerMap);
+
+        Map<String, Integer> stringIntegerMap = new ConcurrentHashMap<>();
+
+        for (Map.Entry<Integer, String> inMap :
+                innerMap.entrySet()) {
+            Integer value = inMap.getKey();
+            for (Map.Entry<String, Map<Integer, String>> outMap :
+                    outerMap.entrySet()) {
+                String key = outMap.getKey();
+                Integer put = stringIntegerMap.put(key, value);
+                log.info("put-{}", put);
+            }
+
+        }
+
+        Set<String> keys = outerMap.keySet();
+        Collection<Map<Integer, String>> values = outerMap.values();
+        log.info("Key-{}", keys);
+        log.info("Values-{}", values);
+
+//        String val = outerMap.get(1L).get(2);
+//        log.info("value: {}", val);
+    }
+
+    @Test
+    void countString() {
+        for (int i = 0; i < 11; i++) {
+            String id = UUID.randomUUID().toString().replace("-", "");
+            long countId = id.chars().count();
+            log.info("Count: {}", countId);
+        }
     }
 }

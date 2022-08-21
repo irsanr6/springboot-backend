@@ -3,11 +3,13 @@ package com.irsan.springbootbackend.service;
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeGetRequest;
+import com.irsan.springbootbackend.model.EmployeeMultipleGetRequest;
 import com.irsan.springbootbackend.model.EmployeeResponse;
 import com.irsan.springbootbackend.model.EmployeeSaveRequest;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
+import com.irsan.springbootbackend.utils.EmployeeSpecification;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,29 +43,55 @@ public class EmployeeServiceImp implements EmployeeService {
     @Override
     public BaseResponse<?> getAllEmployee(EmployeeGetRequest request) {
         Pageable pageable = Helper.getPageRequest(request.getPageIn(), request.getLimit(), "firstName");
-        Page<Employee> employeePage = employeeRepository.findAll(findSpec(request), pageable);
+        Page<Employee> employeePage = employeeRepository.findAll(EmployeeSpecification.findSpec(request), pageable);
         List<Employee> employeeList = employeePage.getContent();
 
         if (employeeList.isEmpty()) {
             Helper.logError200("Data tidak ditemukan");
             return BaseResponse.error200("Data tidak ditemukan");
         } else {
-            for (Employee e :
-                    employeeList) {
-                Helper.ok("Data berhasil ditemukan", e);
-            }
+            Helper.ok("Data berhasil ditemukan");
             return BaseResponse.ok(employeeList.stream()
                     .map(employee -> EmployeeResponse.builder()
                             .employeeId(employee.getEmployeeId())
                             .firstName(employee.getFirstName())
                             .lastName(employee.getLastName())
-                            .fullName(employee.getFirstName() + " " + employee.getLastName())
+                            .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
                             .email(employee.getEmail())
-                            .address(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getAddress())
-                            .phoneNumber(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getPhoneNumber())
-                            .nik(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getNik())
-                            .isAktif(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getIsAktif())
-                            .position(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getPosition())
+                            .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
+                            .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
+                            .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
+                            .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
+                            .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
+                            .build())
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    @Override
+    public BaseResponse<?> getAllByMultipleFilter(EmployeeMultipleGetRequest multipleRequest) {
+
+        Pageable pageable = Helper.getPageRequest(multipleRequest.getPageIn(), multipleRequest.getLimit(), "firstName");
+        Page<Employee> employeePage = employeeRepository.findAll(EmployeeSpecification.findSpecMultiple(multipleRequest), pageable);
+        List<Employee> employeeList = employeePage.getContent();
+
+        if (employeeList.isEmpty()) {
+            Helper.logError200("Data tidak ditemukan");
+            return BaseResponse.error200("Data tidak ditemukan");
+        } else {
+            Helper.ok("Data berhasil ditemukan");
+            return BaseResponse.ok(employeeList.stream()
+                    .map(employee -> EmployeeResponse.builder()
+                            .employeeId(employee.getEmployeeId())
+                            .firstName(employee.getFirstName())
+                            .lastName(employee.getLastName())
+                            .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
+                            .email(employee.getEmail())
+                            .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
+                            .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
+                            .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
+                            .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
+                            .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
                             .build())
                     .collect(Collectors.toList()));
         }
@@ -159,37 +187,6 @@ public class EmployeeServiceImp implements EmployeeService {
                 .isAktif(dataEmpSave.getIsAktif())
                 .position(dataEmpSave.getPosition())
                 .build());
-    }
-
-    private Specification<Employee> findSpec(EmployeeGetRequest request) {
-        return (Root<Employee> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
-            List<Predicate> p = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(request.getEmployeeId())) {
-                p.add(cb.equal(root.get("employeeId"), Long.parseLong(request.getEmployeeId())));
-            }
-            if (StringUtils.isNotBlank(request.getFirstName())) {
-                p.add(cb.like(root.get("firstName"), "%" + request.getFirstName() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getLastName())) {
-                p.add(cb.like(root.get("lastName"), "%" + request.getLastName() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getEmail())) {
-                p.add(cb.like(root.get("email"), "%" + request.getEmail() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getAddress())) {
-                p.add(cb.like(root.get("dataEmployee").get("address"), "%" + request.getAddress() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getNik())) {
-                p.add(cb.like(root.get("dataEmployee").get("nik"), "%" + request.getNik() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getPosition())) {
-                p.add(cb.like(root.get("dataEmployee").get("position"), "%" + request.getPosition() + "%"));
-            }
-
-            return cb.and(p.toArray(new Predicate[]{}));
-        };
-
     }
 
 }
