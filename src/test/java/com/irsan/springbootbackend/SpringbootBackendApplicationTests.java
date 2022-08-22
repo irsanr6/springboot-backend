@@ -1,6 +1,5 @@
 package com.irsan.springbootbackend;
 
-import com.irsan.springbootbackend.entity.CronJobTrigger;
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeResponse;
@@ -13,8 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.EntityManager;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SpringBootTest
 @Slf4j
@@ -26,6 +27,9 @@ class SpringbootBackendApplicationTests {
     private DataEmployeeRepository dataEmployeeRepository;
     @Autowired
     private CronJobTriggerRepository cronJobTriggerRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void getAllEmployee() {
@@ -84,11 +88,11 @@ class SpringbootBackendApplicationTests {
             if (!dataEmployee.isPresent()) {
                 DataEmployee dataEmpCreate = DataEmployee.builder()
                         .employeeId(employee.getEmployeeId())
-                        .address("")
-                        .phoneNumber("")
-                        .nik("")
-                        .isAktif("")
-                        .position("")
+                        .address("-")
+                        .phoneNumber("-")
+                        .nik("-")
+                        .isAktif("-")
+                        .position("-")
                         .build();
                 DataEmployee dataEmpSave = dataEmployeeRepository.save(dataEmpCreate);
 
@@ -113,5 +117,58 @@ class SpringbootBackendApplicationTests {
     void findCronValue() {
         log.info("Cron: {}", cronJobTriggerRepository.findByCodeTrigger("AA").get().getCronValue());
 
+    }
+
+    @Test
+    void loop() {
+        Long[] employeeId = {1L, 2l, 10L};
+
+        List<Employee> employees = new ArrayList<>();
+
+        for (Long id :
+                employeeId) {
+            log.info("employeeId {}", id);
+            employees.add(Optional.ofNullable(employeeRepository.findByEmployeeId(id)).map(Optional::get).orElseGet(null));
+        }
+        log.info("employee {}", employees);
+    }
+
+    @Test
+    void equalsCharSequenceString() {
+        CharSequence firstString = "baeldung";
+        String secondString = "baeldung";
+
+        if (firstString == secondString) {
+            log.info("equals");
+        } else {
+            log.info("not equals");
+        }
+    }
+
+    @Test
+    void testLagi() {
+        List<String> input = new LinkedList<>(Arrays.asList("a", "b", "c"));
+        List<CharSequence> result;
+
+//    result = input; // <-- Type mismatch: cannot convert from List<String> to List<CharSequence>
+        result = new ArrayList<>(input);
+
+        System.out.println(result);
+    }
+
+    @Test
+    void streamJoin() {
+        Stream<String> words = Arrays.asList("Irsan", "Ramadhan").stream();
+        String fullname = words.collect(Collectors.joining(" "));
+        log.info("Full Name: {}", fullname);
+    }
+
+    @Test
+    void countString() {
+        for (int i = 0; i < 11; i++) {
+            String id = UUID.randomUUID().toString().replace("-", "");
+            long countId = id.chars().count();
+            log.info("Count: {}", countId);
+        }
     }
 }

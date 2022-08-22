@@ -8,20 +8,15 @@ import com.irsan.springbootbackend.model.EmployeeSaveRequest;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
+import com.irsan.springbootbackend.utils.EmployeeSpecification;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,29 +36,26 @@ public class EmployeeServiceImp implements EmployeeService {
     @Override
     public BaseResponse<?> getAllEmployee(EmployeeGetRequest request) {
         Pageable pageable = Helper.getPageRequest(request.getPageIn(), request.getLimit(), "firstName");
-        Page<Employee> employeePage = employeeRepository.findAll(findSpec(request), pageable);
+        Page<Employee> employeePage = employeeRepository.findAll(EmployeeSpecification.findSpec(request), pageable);
         List<Employee> employeeList = employeePage.getContent();
 
         if (employeeList.isEmpty()) {
             Helper.logError200("Data tidak ditemukan");
             return BaseResponse.error200("Data tidak ditemukan");
         } else {
-            for (Employee e :
-                    employeeList) {
-                Helper.ok("Data berhasil ditemukan", e);
-            }
+            Helper.ok("Data berhasil ditemukan");
             return BaseResponse.ok(employeeList.stream()
                     .map(employee -> EmployeeResponse.builder()
                             .employeeId(employee.getEmployeeId())
                             .firstName(employee.getFirstName())
                             .lastName(employee.getLastName())
-                            .fullName(employee.getFirstName() + " " + employee.getLastName())
+                            .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
                             .email(employee.getEmail())
-                            .address(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getAddress())
-                            .phoneNumber(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getPhoneNumber())
-                            .nik(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getNik())
-                            .isAktif(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getIsAktif())
-                            .position(employee.getDataEmployee() == null ? "" : employee.getDataEmployee().getPosition())
+                            .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
+                            .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
+                            .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
+                            .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
+                            .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
                             .build())
                     .collect(Collectors.toList()));
         }
@@ -95,7 +87,7 @@ public class EmployeeServiceImp implements EmployeeService {
                         .employeeId(emSave.getEmployeeId())
                         .firstName(emSave.getFirstName())
                         .lastName(emSave.getLastName())
-                        .fullName(emSave.getFirstName() + " " + emSave.getLastName())
+                        .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
                         .email(emSave.getEmail())
                         .address(dataEmpSave.getAddress())
                         .phoneNumber(dataEmpSave.getPhoneNumber())
@@ -107,7 +99,7 @@ public class EmployeeServiceImp implements EmployeeService {
                         .employeeId(emSave.getEmployeeId())
                         .firstName(emSave.getFirstName())
                         .lastName(emSave.getLastName())
-                        .fullName(emSave.getFirstName() + " " + emSave.getLastName())
+                        .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
                         .email(emSave.getEmail())
                         .address(dataEmpSave.getAddress())
                         .phoneNumber(dataEmpSave.getPhoneNumber())
@@ -139,7 +131,7 @@ public class EmployeeServiceImp implements EmployeeService {
                 .employeeId(emSave.getEmployeeId())
                 .firstName(emSave.getFirstName())
                 .lastName(emSave.getLastName())
-                .fullName(emSave.getFirstName() + " " + emSave.getLastName())
+                .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
                 .email(emSave.getEmail())
                 .address(dataEmpSave.getAddress())
                 .phoneNumber(dataEmpSave.getPhoneNumber())
@@ -151,7 +143,7 @@ public class EmployeeServiceImp implements EmployeeService {
                 .employeeId(emSave.getEmployeeId())
                 .firstName(emSave.getFirstName())
                 .lastName(emSave.getLastName())
-                .fullName(emSave.getFirstName() + " " + emSave.getLastName())
+                .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
                 .email(emSave.getEmail())
                 .address(dataEmpSave.getAddress())
                 .phoneNumber(dataEmpSave.getPhoneNumber())
@@ -159,37 +151,6 @@ public class EmployeeServiceImp implements EmployeeService {
                 .isAktif(dataEmpSave.getIsAktif())
                 .position(dataEmpSave.getPosition())
                 .build());
-    }
-
-    private Specification<Employee> findSpec(EmployeeGetRequest request) {
-        return (Root<Employee> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
-            List<Predicate> p = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(request.getEmployeeId())) {
-                p.add(cb.equal(root.get("employeeId"), Long.parseLong(request.getEmployeeId())));
-            }
-            if (StringUtils.isNotBlank(request.getFirstName())) {
-                p.add(cb.like(root.get("firstName"), "%" + request.getFirstName() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getLastName())) {
-                p.add(cb.like(root.get("lastName"), "%" + request.getLastName() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getEmail())) {
-                p.add(cb.like(root.get("email"), "%" + request.getEmail() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getAddress())) {
-                p.add(cb.like(root.get("dataEmployee").get("address"), "%" + request.getAddress() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getNik())) {
-                p.add(cb.like(root.get("dataEmployee").get("nik"), "%" + request.getNik() + "%"));
-            }
-            if (StringUtils.isNotBlank(request.getPosition())) {
-                p.add(cb.like(root.get("dataEmployee").get("position"), "%" + request.getPosition() + "%"));
-            }
-
-            return cb.and(p.toArray(new Predicate[]{}));
-        };
-
     }
 
 }

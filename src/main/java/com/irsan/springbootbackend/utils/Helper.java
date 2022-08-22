@@ -8,6 +8,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author: Irsan Ramadhan
@@ -54,6 +56,22 @@ public class Helper {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         df.setTimeZone(TimeZone.getTimeZone("Asia/Jakarta"));
         return df.format(date);
+    }
+
+    public static String fullName(String fisrtName, String lastName) {
+        Stream<String> words = Stream.of(fisrtName, lastName);
+        return words.collect(Collectors.joining(" "));
+    }
+
+    public static Date currentDate() {
+        Date date = new Date();
+//        Reformat date to string
+//        Date date = new Date().toString();
+//        Date date = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy").parse(dateString);
+//        DateFormat target = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+//        target.setTimeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Jakarta")));
+//        log.info("currentDate {}", target.format(date));
+        return date;
     }
 
 }
