@@ -9,6 +9,7 @@ import com.irsan.springbootbackend.repository.CronJobTriggerRepository;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.repository.JobListActiveRepository;
+import com.irsan.springbootbackend.utils.BaseResponse;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,10 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -41,7 +45,7 @@ public class DataEmployeeUpdateService {
     private Map<String, String> lisJobMap = new ConcurrentHashMap<>();
 
 
-    public String startScheduler() {
+    public BaseResponse<?> startScheduler() {
         final String cron = cronConfig();
         final CronTrigger cronTrigger = new CronTrigger(cron);
         final ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(dataEmployeeUpdate(), cronTrigger);
@@ -56,25 +60,33 @@ public class DataEmployeeUpdateService {
         map.put(id, wrapper);
         cronMap.put(wrapper, wrapper.getCron());
         log.info("START-{} CRON-{}", id, cron);
-        return "START-" + id + " CRON-" + cron;
+        return BaseResponse.ok("START-" + id + " CRON-" + cron);
     }
 
-    public String stopScheduler(String id) {
+    public BaseResponse<?> stopScheduler(String id) {
         jobListActiveRepository.deleteById(id);
         Wrapper wrapper = map.get(id);
-        if (wrapper == null) {
+        Optional<JobListActive> jobId = jobListActiveRepository.findByJobId(id);
+        if (wrapper != null && jobId.isPresent()) {
+            wrapper.getFuture().cancel(false);
+            jobListActiveRepository.deleteById(jobId.get().getJobId());
+            map.remove(id);
+            cronMap.remove(wrapper);
+            lisJobMap.remove(id);
+            if (lisJobMap.isEmpty()) {
+                log.info("Job has deleted all");
+                return BaseResponse.error200("Job has deleted all");
+            } else {
+                log.info("STOP-{}", id);
+                return BaseResponse.ok("STOP-" + id, lisJobMap);
+            }
+        } else {
             log.info("Fail: not found");
-            return "Fail: not found";
+            return BaseResponse.error200("Fail: not found");
         }
-        wrapper.getFuture().cancel(false);
-        map.remove(id);
-        cronMap.remove(wrapper);
-        lisJobMap.remove(id);
-        log.info("STOP-{}", id);
-        return "STOP-" + id;
     }
 
-    public Map<String, String> listScheduler() {
+    public BaseResponse<?> listScheduler() {
         for (Map.Entry<String, Wrapper> job :
                 map.entrySet()) {
             Wrapper wrapper = map.get(job.getKey());
@@ -82,8 +94,13 @@ public class DataEmployeeUpdateService {
             String id = job.getKey();
             lisJobMap.put(id, cron);
         }
-        log.info("JOBLIST-{}", lisJobMap);
-        return lisJobMap;
+        if (lisJobMap.isEmpty()) {
+            log.info("Job has deleted all");
+            return BaseResponse.error200("Job has deleted all");
+        } else {
+            log.info("JOBLIST-{}", lisJobMap);
+            return BaseResponse.ok(lisJobMap);
+        }
     }
 
     public String cronConfig() {
