@@ -115,7 +115,7 @@ public class Helper {
     }
 
     public static String traversWordByWord(String awkward) {
-        String delimiter = ","+" "+";"+":"+"+"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
+        String delimiter = " "+":"+"+"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
         List<String> news = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(awkward, delimiter);
         while (st.hasMoreTokens()) {
