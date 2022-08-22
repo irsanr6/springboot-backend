@@ -2,7 +2,6 @@ package com.irsan.springbootbackend.utils;
 
 import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeGetRequest;
-import com.irsan.springbootbackend.model.EmployeeMultipleGetRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -17,15 +16,10 @@ import java.util.List;
  * @author: Irsan Ramadhan
  * @email: irsan.ramadhan@iconpln.co.id
  */
-public class EmployeeSpecification{
+public class EmployeeSpecification {
 
     public static Specification<Employee> findSpec(EmployeeGetRequest request) {
         return getEmployeeSpecification(request.getEmployeeId(), request.getFirstName(), request.getLastName(), request.getEmail(), request.getAddress(), request.getNik(), request.getPosition());
-
-    }
-
-    public static Specification<Employee> findSpecMultiple(EmployeeMultipleGetRequest multipleRequest) {
-        return getEmployeeSpecification(multipleRequest.getEmployeeId(), multipleRequest.getFirstName(), multipleRequest.getLastName(), multipleRequest.getEmail(), multipleRequest.getAddress(), multipleRequest.getNik(), multipleRequest.getPosition());
 
     }
 

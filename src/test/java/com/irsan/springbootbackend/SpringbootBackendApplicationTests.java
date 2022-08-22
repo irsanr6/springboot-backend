@@ -14,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.persistence.EntityManager;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,11 +88,11 @@ class SpringbootBackendApplicationTests {
             if (!dataEmployee.isPresent()) {
                 DataEmployee dataEmpCreate = DataEmployee.builder()
                         .employeeId(employee.getEmployeeId())
-                        .address("")
-                        .phoneNumber("")
-                        .nik("")
-                        .isAktif("")
-                        .position("")
+                        .address("-")
+                        .phoneNumber("-")
+                        .nik("-")
+                        .isAktif("-")
+                        .position("-")
                         .build();
                 DataEmployee dataEmpSave = dataEmployeeRepository.save(dataEmpCreate);
 
@@ -162,44 +161,6 @@ class SpringbootBackendApplicationTests {
         Stream<String> words = Arrays.asList("Irsan", "Ramadhan").stream();
         String fullname = words.collect(Collectors.joining(" "));
         log.info("Full Name: {}", fullname);
-    }
-
-    @Test
-    void mapInMap() {
-        Map<String, Map<Integer, String>> outerMap = new ConcurrentHashMap<>();
-        Map<Integer, String> innerMap = new ConcurrentHashMap<>();
-        innerMap.put(1, "one");
-        innerMap.put(2, "two");
-        innerMap.put(3, "three");
-        innerMap.put(4, "four");
-        innerMap.put(5, "five");
-        outerMap.put("1L", innerMap);
-        outerMap.put("2L", innerMap);
-        outerMap.put("3L", innerMap);
-        outerMap.put("4L", innerMap);
-        outerMap.put("5L", innerMap);
-
-        Map<String, Integer> stringIntegerMap = new ConcurrentHashMap<>();
-
-        for (Map.Entry<Integer, String> inMap :
-                innerMap.entrySet()) {
-            Integer value = inMap.getKey();
-            for (Map.Entry<String, Map<Integer, String>> outMap :
-                    outerMap.entrySet()) {
-                String key = outMap.getKey();
-                Integer put = stringIntegerMap.put(key, value);
-                log.info("put-{}", put);
-            }
-
-        }
-
-        Set<String> keys = outerMap.keySet();
-        Collection<Map<Integer, String>> values = outerMap.values();
-        log.info("Key-{}", keys);
-        log.info("Values-{}", values);
-
-//        String val = outerMap.get(1L).get(2);
-//        log.info("value: {}", val);
     }
 
     @Test

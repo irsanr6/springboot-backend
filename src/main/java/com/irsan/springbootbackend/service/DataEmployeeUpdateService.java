@@ -42,7 +42,7 @@ public class DataEmployeeUpdateService {
 
     private Map<String, Wrapper> map = new ConcurrentHashMap<>();
     private Map<Wrapper, String> cronMap = new ConcurrentHashMap<>();
-    private Map<String, String> lisJobMap = new ConcurrentHashMap<>();
+    private Map<String, String> listJobMap = new ConcurrentHashMap<>();
 
 
     public BaseResponse<?> startScheduler() {
@@ -64,7 +64,6 @@ public class DataEmployeeUpdateService {
     }
 
     public BaseResponse<?> stopScheduler(String id) {
-        jobListActiveRepository.deleteById(id);
         Wrapper wrapper = map.get(id);
         Optional<JobListActive> jobId = jobListActiveRepository.findByJobId(id);
         if (wrapper != null && jobId.isPresent()) {
@@ -72,13 +71,13 @@ public class DataEmployeeUpdateService {
             jobListActiveRepository.deleteById(jobId.get().getJobId());
             map.remove(id);
             cronMap.remove(wrapper);
-            lisJobMap.remove(id);
-            if (lisJobMap.isEmpty()) {
+            listJobMap.remove(id);
+            if (listJobMap.isEmpty()) {
                 log.info("Job has deleted all");
                 return BaseResponse.error200("Job has deleted all");
             } else {
                 log.info("STOP-{}", id);
-                return BaseResponse.ok("STOP-" + id, lisJobMap);
+                return BaseResponse.ok("STOP-" + id, listJobMap);
             }
         } else {
             log.info("Fail: not found");
@@ -92,14 +91,14 @@ public class DataEmployeeUpdateService {
             Wrapper wrapper = map.get(job.getKey());
             String cron = cronMap.get(wrapper);
             String id = job.getKey();
-            lisJobMap.put(id, cron);
+            listJobMap.put(id, cron);
         }
-        if (lisJobMap.isEmpty()) {
+        if (listJobMap.isEmpty()) {
             log.info("Job has deleted all");
             return BaseResponse.error200("Job has deleted all");
         } else {
-            log.info("JOBLIST-{}", lisJobMap);
-            return BaseResponse.ok(lisJobMap);
+            log.info("JOBLIST-{}", listJobMap);
+            return BaseResponse.ok(listJobMap);
         }
     }
 

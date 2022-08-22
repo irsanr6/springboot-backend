@@ -1,19 +1,15 @@
 package com.irsan.springbootbackend.controller;
 
-import com.irsan.springbootbackend.entity.Employee;
 import com.irsan.springbootbackend.model.EmployeeGetRequest;
-import com.irsan.springbootbackend.model.EmployeeMultipleGetRequest;
 import com.irsan.springbootbackend.model.EmployeeSaveRequest;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.service.EmployeeService;
 import com.irsan.springbootbackend.utils.BaseResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author: Irsan Ramadhan
@@ -35,11 +31,6 @@ public class EmployeeController {
     @PostMapping("/save")
     public BaseResponse<?> saveEmployee(@RequestBody EmployeeSaveRequest request) {
         return employeeService.saveEmployee(request);
-    }
-
-    @GetMapping("/getAll")
-    public BaseResponse<?> getAllByMultipleFilter(EmployeeMultipleGetRequest multipleRequest) {
-        return employeeService.getAllByMultipleFilter(multipleRequest);
     }
 
 }

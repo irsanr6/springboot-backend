@@ -1,7 +1,7 @@
 package com.irsan.springbootbackend.config;
 
-import com.irsan.springbootbackend.utils.FieldErrorModel;
 import com.irsan.springbootbackend.utils.BaseResponse;
+import com.irsan.springbootbackend.utils.FieldErrorModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
