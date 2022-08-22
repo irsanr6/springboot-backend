@@ -8,6 +8,7 @@ import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -170,5 +171,20 @@ class SpringbootBackendApplicationTests {
             long countId = id.chars().count();
             log.info("Count: {}", countId);
         }
+    }
+
+    @Test
+    void traversWordByWord() {
+        String awkward = "Irsan Ramadhan_Noverry-Ambo:Fachrul;Hidayat.Galang,Saputra@Dinda!Aulia(Nabila Anggraini)Inwan";
+        String delimiter = "."+","+" "+";"+":"+"+"+"("+")"+"{"+"}"+"["+"]"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
+        List<String> news = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(awkward, delimiter);
+        while (st.hasMoreTokens()) {
+            news.add(st.nextToken());
+        }
+        String words = news.stream()
+                .map(String::intern)
+                .collect(Collectors.joining("-"));
+        log.info("{}", StringUtils.lowerCase(words));
     }
 }
