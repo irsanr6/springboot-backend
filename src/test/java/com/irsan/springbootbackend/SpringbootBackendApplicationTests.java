@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.persistence.EntityManager;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -186,5 +188,27 @@ class SpringbootBackendApplicationTests {
                 .map(String::intern)
                 .collect(Collectors.joining("-"));
         log.info("{}", StringUtils.lowerCase(words));
+    }
+
+    @Test
+    void asciiToAlphabet() throws UnsupportedEncodingException {
+        int num = 65;
+        char alph = (char) num;
+
+        List<Integer> asciis = new ArrayList<>();
+
+        String name = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        byte[] bytes = name.getBytes(StandardCharsets.US_ASCII);
+
+        String character = "Irsan";
+        for (char c :
+                character.toCharArray()) {
+            int ascii = (int) c;
+            asciis.add(ascii);
+        }
+        
+        log.info("ascii-{}", asciis);
+        log.info("alph-{}", alph);
+        log.info("bytes-{}", bytes);
     }
 }
