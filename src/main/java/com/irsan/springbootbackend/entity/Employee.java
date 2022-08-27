@@ -30,6 +30,8 @@ public class Employee {
     private String email;
     private String username;
     private String password;
+    @Column(name = "encode_password")
+    private String encodePassword;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", referencedColumnName = "employee_id",

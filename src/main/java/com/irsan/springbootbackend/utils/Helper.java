@@ -128,4 +128,13 @@ public class Helper {
         return StringUtils.lowerCase(words);
     }
 
+    public static String encodeString(String password) {
+        return Base64.getEncoder().encodeToString(password.getBytes());
+    }
+
+    public static String decodeString(String passEncode) {
+        byte[] decodedBytes = Base64.getDecoder().decode(passEncode);
+        return new String(decodedBytes);
+    }
+
 }

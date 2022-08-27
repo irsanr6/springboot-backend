@@ -3,6 +3,7 @@ package com.irsan.springbootbackend.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,8 +39,10 @@ public class BasicAuthSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        String[] pathArray = new String[]{"/api/v1/signup", "/api/v1/signin", "/api/v1/checkPassword*"};
         http.csrf().disable()
-                .authorizeRequests().anyRequest().permitAll()
+                .authorizeRequests().antMatchers(pathArray).permitAll()
+                .anyRequest().authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 

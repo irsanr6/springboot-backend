@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityManager;
 import java.io.UnsupportedEncodingException;
@@ -33,6 +34,9 @@ class SpringbootBackendApplicationTests {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void getAllEmployee() {
@@ -88,7 +92,7 @@ class SpringbootBackendApplicationTests {
         for (Employee employee :
                 employeeList) {
             Optional<DataEmployee> dataEmployee = dataEmployeeRepository.findByEmployeeId(employee.getEmployeeId());
-            if (!dataEmployee.isPresent()) {
+            if (dataEmployee.isEmpty()) {
                 DataEmployee dataEmpCreate = DataEmployee.builder()
                         .employeeId(employee.getEmployeeId())
                         .address("-")
@@ -178,7 +182,7 @@ class SpringbootBackendApplicationTests {
     @Test
     void traversWordByWord() {
         String awkward = "Irsan Ramadhan_Noverry-Ambo:Fachrul;Hidayat.Galang,Saputra@Dinda!Aulia(Nabila Anggraini)Inwan";
-        String delimiter = "."+","+" "+";"+":"+"+"+"("+")"+"{"+"}"+"["+"]"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
+        String delimiter = "." + "," + " " + ";" + ":" + "+" + "(" + ")" + "{" + "}" + "[" + "]" + "!" + "@" + "?" + "/" + "*" + "&" + "%" + "$" + "#" + "=" + "-" + "_";
         List<String> news = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(awkward, delimiter);
         while (st.hasMoreTokens()) {
@@ -203,12 +207,41 @@ class SpringbootBackendApplicationTests {
         String character = "Irsan";
         for (char c :
                 character.toCharArray()) {
-            int ascii = (int) c;
-            asciis.add(ascii);
+            asciis.add((int) c);
         }
-        
+
         log.info("ascii-{}", asciis);
         log.info("alph-{}", alph);
         log.info("bytes-{}", bytes);
+    }
+
+    @Test
+    void deleteEmployee() {
+        Long id = 41L;
+        Optional<Employee> employee = employeeRepository.findByEmployeeId(id);
+        if (employee.isPresent()) {
+            Employee emp = employee.get();
+            employeeRepository.delete(emp);
+            log.info("Employe with id {} has deleted", emp.getEmployeeId());
+        } else {
+            log.info("Fail: not found");
+        }
+    }
+
+    @Test
+    void setPassword() {
+        List<Employee> employeeList = employeeRepository.findAll();
+        String password;
+        for (Employee emp :
+                employeeList) {
+            Optional<Employee> employee = employeeRepository.findByEmployeeId(emp.getEmployeeId());
+            if (employee.isPresent()) {
+                Employee empSet = employee.get();
+                password = StringUtils.lowerCase(String.join(".", empSet.getLastName(), empSet.getFirstName()));
+                empSet.setPassword(passwordEncoder.encode(password));
+                empSet.setEncodePassword(Helper.encodeString(StringUtils.lowerCase(password)));
+                employeeRepository.save(empSet);
+            }
+        }
     }
 }
