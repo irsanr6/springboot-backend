@@ -51,6 +51,7 @@ public class EmployeeServiceImp implements EmployeeService {
                             .lastName(employee.getLastName())
                             .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
                             .email(employee.getEmail())
+                            .username(employee.getUsername())
                             .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
                             .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
                             .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))

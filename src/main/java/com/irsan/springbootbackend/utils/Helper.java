@@ -1,15 +1,18 @@
 package com.irsan.springbootbackend.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 /**
  * @author: Irsan Ramadhan
@@ -72,6 +75,66 @@ public class Helper {
 //        target.setTimeZone(TimeZone.getTimeZone(ZoneId.of("Asia/Jakarta")));
 //        log.info("currentDate {}", target.format(date));
         return date;
+    }
+
+    public static byte[] compressImage(byte[] data) {
+        Deflater deflater = new Deflater();
+        deflater.setLevel(Deflater.BEST_COMPRESSION);
+        deflater.setInput(data);
+        deflater.finish();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] tmp = new byte[4*1024];
+        while (!deflater.finished()) {
+            int size = deflater.deflate(tmp);
+            outputStream.write(tmp, 0, size);
+        }
+        try {
+            outputStream.close();
+        } catch (Exception ignored) {
+        }
+        return outputStream.toByteArray();
+    }
+
+
+
+    public static byte[] decompressImage(byte[] data) {
+        Inflater inflater = new Inflater();
+        inflater.setInput(data);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] tmp = new byte[4*1024];
+        try {
+            while (!inflater.finished()) {
+                int count = inflater.inflate(tmp);
+                outputStream.write(tmp, 0, count);
+            }
+            outputStream.close();
+        } catch (Exception ignored) {
+        }
+        return outputStream.toByteArray();
+    }
+
+    public static String traversWordByWord(String awkward) {
+        String delimiter = " "+":"+"+"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
+        List<String> news = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(awkward, delimiter);
+        while (st.hasMoreTokens()) {
+            news.add(st.nextToken());
+        }
+        String words = news.stream()
+                .map(String::intern)
+                .collect(Collectors.joining("-"));
+
+        return StringUtils.lowerCase(words);
+    }
+
+    public static String encodeString(String password) {
+        return Base64.getEncoder().encodeToString(password.getBytes());
+    }
+
+    public static String decodeString(String passEncode) {
+        byte[] decodedBytes = Base64.getDecoder().decode(passEncode);
+        return new String(decodedBytes);
     }
 
 }
