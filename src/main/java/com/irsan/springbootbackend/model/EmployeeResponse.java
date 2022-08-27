@@ -17,6 +17,7 @@ public class EmployeeResponse {
     private String lastName;
     private String fullName;
     private String email;
+    private String username;
     private String address;
     private String phoneNumber;
     private String nik;

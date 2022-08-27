@@ -28,6 +28,8 @@ public class Employee {
     @Column(name = "last_name")
     private String lastName;
     private String email;
+    private String username;
+    private String password;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", referencedColumnName = "employee_id",
