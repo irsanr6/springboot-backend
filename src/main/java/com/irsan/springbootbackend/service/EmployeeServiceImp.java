@@ -2,6 +2,7 @@ package com.irsan.springbootbackend.service;
 
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
+import com.irsan.springbootbackend.model.DataResponse;
 import com.irsan.springbootbackend.model.EmployeeGetRequest;
 import com.irsan.springbootbackend.model.EmployeeResponse;
 import com.irsan.springbootbackend.model.EmployeeSaveRequest;
@@ -10,6 +11,7 @@ import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
 import com.irsan.springbootbackend.utils.EmployeeSpecification;
 import com.irsan.springbootbackend.utils.Helper;
+import com.irsan.springbootbackend.utils.SessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,7 +37,7 @@ public class EmployeeServiceImp implements EmployeeService {
     private final DataEmployeeRepository dataEmployeeRepository;
 
     @Override
-    public BaseResponse<?> getAllEmployee(EmployeeGetRequest request) {
+    public BaseResponse<?> getAllEmployee(EmployeeGetRequest request, HttpServletRequest httpRequest) {
         Pageable pageable = Helper.getPageRequest(request.getPageIn(), request.getLimit(), "firstName");
         Page<Employee> employeePage = employeeRepository.findAll(EmployeeSpecification.findSpec(request), pageable);
         List<Employee> employeeList = employeePage.getContent();
@@ -44,21 +47,24 @@ public class EmployeeServiceImp implements EmployeeService {
             return BaseResponse.error200("Data tidak ditemukan");
         } else {
             Helper.ok("Data berhasil ditemukan");
-            return BaseResponse.ok(employeeList.stream()
-                    .map(employee -> EmployeeResponse.builder()
-                            .employeeId(employee.getEmployeeId())
-                            .firstName(employee.getFirstName())
-                            .lastName(employee.getLastName())
-                            .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
-                            .email(employee.getEmail())
-                            .username(employee.getUsername())
-                            .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
-                            .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
-                            .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
-                            .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
-                            .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
-                            .build())
-                    .collect(Collectors.toList()));
+            return BaseResponse.ok(DataResponse.builder()
+                    .list(employeeList.stream()
+                            .map(employee -> EmployeeResponse.builder()
+                                    .employeeId(employee.getEmployeeId())
+                                    .firstName(employee.getFirstName())
+                                    .lastName(employee.getLastName())
+                                    .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
+                                    .email(employee.getEmail())
+                                    .username(employee.getUsername())
+                                    .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
+                                    .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
+                                    .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
+                                    .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
+                                    .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
+                                    .build())
+                            .collect(Collectors.toList()))
+                    .userAccess(SessionUtil.getUserData(httpRequest))
+                    .build());
         }
     }
 

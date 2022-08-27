@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * @author: Irsan Ramadhan
  * @email: irsan.ramadhan@iconpln.co.id
@@ -22,8 +24,9 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @PostMapping("/getAll")
-    public BaseResponse<?> getAllEmployee(@RequestBody EmployeeGetRequest request) {
-        return employeeService.getAllEmployee(request);
+    public BaseResponse<?> getAllEmployee(@RequestBody EmployeeGetRequest request,
+                                          HttpServletRequest httpRequest) {
+        return employeeService.getAllEmployee(request, httpRequest);
     }
 
     @PostMapping("/save")

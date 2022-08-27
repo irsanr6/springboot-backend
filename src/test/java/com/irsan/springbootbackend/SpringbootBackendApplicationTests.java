@@ -6,6 +6,7 @@ import com.irsan.springbootbackend.model.EmployeeResponse;
 import com.irsan.springbootbackend.repository.CronJobTriggerRepository;
 import com.irsan.springbootbackend.repository.DataEmployeeRepository;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
+import com.irsan.springbootbackend.utils.CompressionUtil;
 import com.irsan.springbootbackend.utils.Helper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityManager;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -229,7 +231,7 @@ class SpringbootBackendApplicationTests {
     }
 
     @Test
-    void setPassword() {
+    void setPassword() throws IOException {
         List<Employee> employeeList = employeeRepository.findAll();
         String password;
         for (Employee emp :
@@ -239,9 +241,29 @@ class SpringbootBackendApplicationTests {
                 Employee empSet = employee.get();
                 password = StringUtils.lowerCase(String.join(".", empSet.getLastName(), empSet.getFirstName()));
                 empSet.setPassword(passwordEncoder.encode(password));
-                empSet.setEncodePassword(Helper.encodeString(StringUtils.lowerCase(password)));
+                empSet.setEncodePassword(CompressionUtil.compressB64(StringUtils.lowerCase(password)));
                 employeeRepository.save(empSet);
             }
         }
+    }
+
+    String testStr = "Irsan Ramadhan";
+
+    @Test
+    void compressByte() throws IOException {
+        byte[] input = testStr.getBytes();
+        byte[] op = CompressionUtil.compress(input);
+        System.out.println("original data length " + input.length + ",  compressed data length " + op.length);
+        byte[] org = CompressionUtil.decompress(op);
+        System.out.println(new String(op, StandardCharsets.UTF_8));
+        System.out.println(new String(org, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void compress() throws IOException {
+        String op = CompressionUtil.compressB64(testStr);
+        System.out.println("Compressed data b64" + op);
+        String org = CompressionUtil.decompressB64(op);
+        System.out.println("Original text" + org);
     }
 }

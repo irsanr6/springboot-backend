@@ -6,7 +6,9 @@ import com.irsan.springbootbackend.model.SignUpRequest;
 import com.irsan.springbootbackend.model.SignUpResponse;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
+import com.irsan.springbootbackend.utils.CompressionUtil;
 import com.irsan.springbootbackend.utils.Helper;
+import com.irsan.springbootbackend.utils.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +17,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -29,17 +32,31 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmployeeDetailsServiceImpl employeeDetailsService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
     @Autowired
     private EmployeeRepository employeeRepository;
 
     public BaseResponse<?> authenticateUser(SignInRequest signInRequest) {
+        getStringBaseResponse(signInRequest);
+        final UserDetails userDetails = employeeDetailsService.loadUserByUsername(signInRequest.getUsernameOrEmail());
+        final String token =jwtTokenUtil.generateToken(userDetails);
+        return BaseResponse.ok(token);
+    }
+
+    private void getStringBaseResponse(SignInRequest signInRequest) {
         try {
             Authentication authentication = authenticationManager.
                     authenticate(new UsernamePasswordAuthenticationToken(signInRequest.getUsernameOrEmail(), signInRequest.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            return BaseResponse.ok("User signed-in successfully!.");
+            BaseResponse.ok("User signed-in successfully!.");
         } catch (BadCredentialsException exception) {
-            return BaseResponse.error("User signed-in failed!.", exception.getMessage());
+            BaseResponse.error("User signed-in failed!.", exception.getMessage());
         }
     }
 
@@ -81,36 +98,48 @@ public class AuthService {
         return BaseResponse.ok("User registered successfully", response);
     }
 
-    public BaseResponse<?> checkPassword(String employeeId, String searchGlobal) {
+    public BaseResponse<?> checkPassword(String employeeId, String searchGlobal) throws IOException {
         Map<String, String> mapRes = new HashMap<>();
         List<Map<String, String>> listMapRes = new ArrayList<>();
         if (StringUtils.isEmpty(employeeId) && StringUtils.isEmpty(searchGlobal)) {
-            return BaseResponse.error("Error, no data to present",listMapRes);
+            return BaseResponse.error("Error, no data to present", listMapRes);
         }
         if (StringUtils.isEmpty(employeeId)) {
             return getBaseResponse(searchGlobal, mapRes, listMapRes);
         }
         if (StringUtils.isEmpty(searchGlobal)) {
-            employeeRepository.findByEmployeeId(Long.valueOf(employeeId)).ifPresent(optEmployee -> mapRes.put(optEmployee.getUsername(), Helper.decodeString(optEmployee.getEncodePassword())));
+            employeeRepository.findByEmployeeId(Long.valueOf(employeeId)).ifPresent(optEmployee -> {
+                try {
+                    mapRes.put(optEmployee.getUsername(), CompressionUtil.decompressB64(optEmployee.getEncodePassword()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             if (mapRes.isEmpty()) {
-                return BaseResponse.error("Error, no data to present",listMapRes);
+                return BaseResponse.error("Error, no data to present", listMapRes);
             }
             listMapRes.add(mapRes);
             return BaseResponse.ok(listMapRes);
 
         }
-        employeeRepository.findByEmployeeId(Long.valueOf(employeeId)).ifPresent(optEmployee -> mapRes.put(optEmployee.getUsername(), Helper.decodeString(optEmployee.getEncodePassword())));
+        employeeRepository.findByEmployeeId(Long.valueOf(employeeId)).ifPresent(optEmployee -> {
+            try {
+                mapRes.put(optEmployee.getUsername(), CompressionUtil.decompressB64(optEmployee.getEncodePassword()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         return getBaseResponse(searchGlobal, mapRes, listMapRes);
     }
 
-    private BaseResponse<?> getBaseResponse(String searchGlobal, Map<String, String> mapRes, List<Map<String, String>> listMapRes) {
+    private BaseResponse<?> getBaseResponse(String searchGlobal, Map<String, String> mapRes, List<Map<String, String>> listMapRes) throws IOException {
         List<Employee> employeeList = getEmployees(searchGlobal);
         for (Employee emp :
                 employeeList) {
-            mapRes.put(emp.getUsername(), Helper.decodeString(emp.getEncodePassword()));
+            mapRes.put(emp.getUsername(), CompressionUtil.decompressB64(emp.getEncodePassword()));
         }
         if (mapRes.isEmpty()) {
-            return BaseResponse.error("Error, no data to present",listMapRes);
+            return BaseResponse.error("Error, no data to present", listMapRes);
         }
         listMapRes.add(mapRes);
         return BaseResponse.ok(listMapRes);
