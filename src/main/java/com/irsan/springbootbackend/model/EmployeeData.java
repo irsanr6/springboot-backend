@@ -1,6 +1,9 @@
 package com.irsan.springbootbackend.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author: Irsan Ramadhan
@@ -10,11 +13,12 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class EmployeeSaveRequest {
+public class EmployeeData {
 
-    private String employeeId;
+    private Long employeeId;
     private String firstName;
     private String lastName;
+    private String fullName;
     private String email;
     private String username;
     private String address;

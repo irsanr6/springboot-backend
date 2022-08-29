@@ -1,10 +1,13 @@
 package com.irsan.springbootbackend.filter;
 
+import com.irsan.springbootbackend.model.EmployeeData;
 import com.irsan.springbootbackend.service.EmployeeDetailsServiceImpl;
 import com.irsan.springbootbackend.utils.Constant;
 import com.irsan.springbootbackend.utils.JwtTokenUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
+@Slf4j
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -29,15 +33,16 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        final String requestTokenHeader = request.getHeader("Authorization");
 
-        String username = null;
+        String usernameOrEmail = null;
         String jwtToken = null;
-        // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
+        EmployeeData employeeData = new EmployeeData();
+        String requestTokenHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            jwtToken = requestTokenHeader.substring(7);
+            jwtToken = requestTokenHeader.replace("Bearer ", "");
+            employeeData = jwtTokenUtil.extractToken(jwtToken);
             try {
-                username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+                usernameOrEmail = employeeData.getUsername();
             } catch (IllegalArgumentException e) {
                 System.out.println("Unable to get JWT Token");
             } catch (ExpiredJwtException e) {
@@ -47,24 +52,19 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             logger.warn("JWT Token does not begin with Bearer String");
         }
 
-        //Once we get the token validate it.
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (usernameOrEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails = this.employeeDetailsService.loadUserByUsername(username);
-
-            // if token is valid configure Spring Security to manually set authentication
+            UserDetails userDetails = employeeDetailsService.loadUserByUsername(usernameOrEmail);
             if (jwtTokenUtil.validateToken(jwtToken, userDetails)) {
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // After setting the Authentication in the context, we specify
-                // that the current user is authenticated. So it passes the Spring Security Configurations successfully.
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         }
-        request.setAttribute(Constant.HEADER_DATA, username);
+        request.setAttribute(Constant.HEADER_DATA, employeeData);
         filterChain.doFilter(request, response);
 
     }

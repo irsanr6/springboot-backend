@@ -2,10 +2,12 @@ package com.irsan.springbootbackend.entity;
 
 //import com.irsan.springbootbackend.listener.DataEmployeeAuditTrailListener;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author: Irsan Ramadhan
@@ -30,5 +32,10 @@ public class DataEmployee {
     @Column(name = "is_aktif")
     private String isAktif;
     private String position;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Jakarta")
+    @Column(name = "updated_at")
+    private Date updatedAt;
+    @Column(name = "updated_by")
+    private Long updatedBy;
 
 }

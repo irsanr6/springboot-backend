@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -265,5 +266,18 @@ class SpringbootBackendApplicationTests {
         System.out.println("Compressed data b64" + op);
         String org = CompressionUtil.decompressB64(op);
         System.out.println("Original text" + org);
+    }
+
+    @Test
+    void convertTime() {
+        long second = 5;
+        long minute = 4;
+        long hour = 1;
+        long millisecond = TimeUnit.SECONDS.toMillis(second);
+        long millisecond2 = TimeUnit.MINUTES.toMillis(minute);
+        long millisecond3 = TimeUnit.HOURS.toMillis(hour);
+        log.info("second to millisecond {}", millisecond);
+        log.info("minute to millisecond {}", millisecond2);
+        log.info("hour to millisecond {}", millisecond3);
     }
 }

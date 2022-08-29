@@ -1,9 +1,8 @@
 package com.irsan.springbootbackend.service;
 
+import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
-import com.irsan.springbootbackend.model.SignInRequest;
-import com.irsan.springbootbackend.model.SignUpRequest;
-import com.irsan.springbootbackend.model.SignUpResponse;
+import com.irsan.springbootbackend.model.*;
 import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
 import com.irsan.springbootbackend.utils.CompressionUtil;
@@ -17,7 +16,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,11 +28,9 @@ public class AuthService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private EmployeeDetailsServiceImpl employeeDetailsService;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -44,9 +40,29 @@ public class AuthService {
 
     public BaseResponse<?> authenticateUser(SignInRequest signInRequest) {
         getStringBaseResponse(signInRequest);
-        final UserDetails userDetails = employeeDetailsService.loadUserByUsername(signInRequest.getUsernameOrEmail());
-        final String token =jwtTokenUtil.generateToken(userDetails);
-        return BaseResponse.ok(token);
+        final Employee employee = employeeRepository.findByUsernameOrEmail(signInRequest.getUsernameOrEmail(), signInRequest.getUsernameOrEmail()).get();
+        EmployeeData employeeData = EmployeeData.builder()
+                .employeeId(employee.getEmployeeId())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .fullName(Helper.fullName(employee.getFirstName(), employee.getLastName()))
+                .email(employee.getEmail())
+                .username(employee.getUsername())
+                .address(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getAddress).orElse("-"))
+                .phoneNumber(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPhoneNumber).orElse("-"))
+                .nik(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getNik).orElse("-"))
+                .isAktif(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getIsAktif).orElse("-"))
+                .position(Optional.ofNullable(employee.getDataEmployee()).map(DataEmployee::getPosition).orElse("-"))
+                .build();
+        final String token = jwtTokenUtil.generateToken(employeeData);
+        return BaseResponse.ok(UserAccessResponse.builder()
+                .userAccess(UserAccessResponse.UserAccess.builder()
+                        .fullName(employeeData.getFullName())
+                        .username(employeeData.getUsername())
+                        .email(employeeData.getEmail())
+                        .build())
+                .token(token)
+                .build());
     }
 
     private void getStringBaseResponse(SignInRequest signInRequest) {
@@ -60,7 +76,7 @@ public class AuthService {
         }
     }
 
-    public BaseResponse<?> registerUser(SignUpRequest signUpRequests) {
+    public BaseResponse<?> registerUser(SignUpRequest signUpRequests) throws IOException {
         String usernameReq = signUpRequests.getUsername();
         String username;
         if (employeeRepository.findByUsername(signUpRequests.getUsername()).isPresent()) {
@@ -82,7 +98,9 @@ public class AuthService {
                 .email(signUpRequests.getEmail())
                 .username(username)
                 .password(passwordEncoder.encode(signUpRequests.getPassword()))
-                .encodePassword(Helper.encodeString(signUpRequests.getPassword()))
+                .encodePassword(CompressionUtil.compressB64(signUpRequests.getPassword()))
+                .createdAt(Helper.currentDate())
+                .updatedAt(Helper.currentDate())
                 .build();
 
         Employee save = employeeRepository.save(employee);
@@ -115,7 +133,7 @@ public class AuthService {
                     throw new RuntimeException(e);
                 }
             });
-            if (mapRes.isEmpty()) {
+            if (Helper.isNullOrEmptyMap(mapRes)) {
                 return BaseResponse.error("Error, no data to present", listMapRes);
             }
             listMapRes.add(mapRes);
@@ -132,13 +150,15 @@ public class AuthService {
         return getBaseResponse(searchGlobal, mapRes, listMapRes);
     }
 
-    private BaseResponse<?> getBaseResponse(String searchGlobal, Map<String, String> mapRes, List<Map<String, String>> listMapRes) throws IOException {
+    private BaseResponse<?> getBaseResponse(String searchGlobal,
+                                            Map<String, String> mapRes,
+                                            List<Map<String, String>> listMapRes) throws IOException {
         List<Employee> employeeList = getEmployees(searchGlobal);
         for (Employee emp :
                 employeeList) {
             mapRes.put(emp.getUsername(), CompressionUtil.decompressB64(emp.getEncodePassword()));
         }
-        if (mapRes.isEmpty()) {
+        if (Helper.isNullOrEmptyMap(mapRes)) {
             return BaseResponse.error("Error, no data to present", listMapRes);
         }
         listMapRes.add(mapRes);

@@ -66,5 +66,13 @@ public class BaseResponse<T> implements Serializable {
                 .build();
     }
 
+    public static <T> BaseResponse<T> create(int status, boolean success, String message, T data) {
+        return BaseResponse.<T>builder()
+                .status(status)
+                .success(success)
+                .message(StringUtils.isNotBlank(message) ? message : "")
+                .data(data)
+                .build();
+    }
 
 }

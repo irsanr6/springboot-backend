@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
  * @email: irsan.ramadhan@iconpln.co.id
  */
 public interface EmployeeService {
-    BaseResponse<?> getAllEmployee(EmployeeGetRequest request, HttpServletRequest httpRequest);
+    BaseResponse<?> getAllEmployee(EmployeeGetRequest request);
 
-    BaseResponse<?> saveEmployee(EmployeeSaveRequest request);
+    BaseResponse<?> saveEmployee(EmployeeSaveRequest request, HttpServletRequest httpRequest);
 }

@@ -1,6 +1,10 @@
 package com.irsan.springbootbackend.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.irsan.springbootbackend.model.EmployeeData;
 import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -8,25 +12,55 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @Component
 public class JwtTokenUtil implements Serializable {
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private static final long serialVersionUID = -7318197132267934085L;
-    public static final long JWT_TOKEN_VALIDITY = 5*60*60;
-    private final String secret = "techgeeknext";
+    public static final long JWT_TOKEN_VALIDITY = 24;
+    private static final String SECRET = "techgeeknext";
 
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+    private String doGenerateToken(Map<String, Object> claims, EmployeeData employeeData) {
+        try {
+            return Jwts.builder()
+                    .setClaims(claims)
+                    .setSubject(objectMapper.writeValueAsString(employeeData))
+                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                    .setExpiration(new Date(System.currentTimeMillis() + (TimeUnit.HOURS.toMillis(JWT_TOKEN_VALIDITY))))
+                    .signWith(SignatureAlgorithm.HS256, SECRET)
+                    .compressWith(CompressionCodecs.GZIP)
+                    .compact();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public Date getIssuedAtDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getIssuedAt);
+    public String generateToken(EmployeeData employeeData) {
+        Map<String, Object> claims = new HashMap<>();
+        return doGenerateToken(claims, employeeData);
     }
 
-    public Date getExpirationDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getExpiration);
+    public EmployeeData extractToken(String token) {
+        try {
+            Jws<Claims> claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
+            if (new Date().after(claims.getBody().getExpiration())) {
+                return null;
+            }
+            return objectMapper.readValue(claims.getBody().getSubject(), EmployeeData.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private Claims getAllClaimsFromToken(String token) {
+        return Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
     }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
@@ -34,8 +68,8 @@ public class JwtTokenUtil implements Serializable {
         return claimsResolver.apply(claims);
     }
 
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+    public Date getExpirationDateFromToken(String token) {
+        return getClaimFromToken(token, Claims::getExpiration);
     }
 
     private Boolean isTokenExpired(String token) {
@@ -43,29 +77,9 @@ public class JwtTokenUtil implements Serializable {
         return expiration.before(new Date());
     }
 
-    private Boolean ignoreTokenExpiration(String token) {
-        // here you specify tokens, for that the expiration is ignored
-        return false;
-    }
-
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername());
-    }
-
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
-
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY*1000)).signWith(SignatureAlgorithm.HS256, secret)
-                .compressWith(CompressionCodecs.GZIP).compact();
-    }
-
-    public Boolean canTokenBeRefreshed(String token) {
-        return (!isTokenExpired(token) || ignoreTokenExpiration(token));
-    }
-
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
+        EmployeeData employeeData = extractToken(token);
+        String username = employeeData.getUsername();
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 

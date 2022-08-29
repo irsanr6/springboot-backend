@@ -24,14 +24,14 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @PostMapping("/getAll")
-    public BaseResponse<?> getAllEmployee(@RequestBody EmployeeGetRequest request,
-                                          HttpServletRequest httpRequest) {
-        return employeeService.getAllEmployee(request, httpRequest);
+    public BaseResponse<?> getAllEmployee(@RequestBody EmployeeGetRequest request) {
+        return employeeService.getAllEmployee(request);
     }
 
     @PostMapping("/save")
-    public BaseResponse<?> saveEmployee(@RequestBody EmployeeSaveRequest request) {
-        return employeeService.saveEmployee(request);
+    public BaseResponse<?> saveEmployee(@RequestBody EmployeeSaveRequest request,
+                                        HttpServletRequest httpRequest) {
+        return employeeService.saveEmployee(request, httpRequest);
     }
 
 }

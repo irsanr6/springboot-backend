@@ -22,7 +22,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public BaseResponse<?> registerUser(@RequestBody SignUpRequest signUpRequests) {
+    public BaseResponse<?> registerUser(@RequestBody SignUpRequest signUpRequests) throws IOException {
         return authService.registerUser(signUpRequests);
     }
 
