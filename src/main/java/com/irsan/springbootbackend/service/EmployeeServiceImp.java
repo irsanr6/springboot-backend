@@ -2,6 +2,7 @@ package com.irsan.springbootbackend.service;
 
 import com.irsan.springbootbackend.entity.DataEmployee;
 import com.irsan.springbootbackend.entity.Employee;
+import com.irsan.springbootbackend.model.EmployeeData;
 import com.irsan.springbootbackend.model.EmployeeGetRequest;
 import com.irsan.springbootbackend.model.EmployeeResponse;
 import com.irsan.springbootbackend.model.EmployeeSaveRequest;
@@ -10,6 +11,7 @@ import com.irsan.springbootbackend.repository.EmployeeRepository;
 import com.irsan.springbootbackend.utils.BaseResponse;
 import com.irsan.springbootbackend.utils.EmployeeSpecification;
 import com.irsan.springbootbackend.utils.Helper;
+import com.irsan.springbootbackend.utils.SessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -63,95 +66,76 @@ public class EmployeeServiceImp implements EmployeeService {
     }
 
     @Override
-    public BaseResponse<?> saveEmployee(EmployeeSaveRequest request) {
+    public BaseResponse<?> saveEmployee(EmployeeSaveRequest request, HttpServletRequest httpRequest) {
+        EmployeeData employeeData = SessionUtil.getEmployeeData(httpRequest);
+        Employee emSave = new Employee();
+        DataEmployee dataEmpUpdate = new DataEmployee();
+        DataEmployee dataEmpSave = new DataEmployee();
+
         if (StringUtils.isNotEmpty(request.getEmployeeId())
                 && StringUtils.isNotBlank(request.getEmployeeId())
                 && !request.getEmployeeId().equals("")) {
             Optional<Employee> employee = employeeRepository.findByEmployeeId(Long.parseLong(request.getEmployeeId()));
             Optional<DataEmployee> dataEmployee = dataEmployeeRepository.findByEmployeeId(Long.parseLong(request.getEmployeeId()));
-            if (employee.isPresent() && dataEmployee.isPresent()) {
-                Employee emUpdate = employee.get();
-                emUpdate.setFirstName(request.getFirstName());
-                emUpdate.setLastName(request.getLastName());
-                emUpdate.setEmail(request.getEmail());
-                Employee emSave = employeeRepository.save(emUpdate);
+            if (dataEmployee.isPresent()) {
+                emSave = setEmployee(request, employeeData, employee);
 
-                DataEmployee dataEmpUpdate = dataEmployee.get();
+                dataEmpUpdate = dataEmployee.get();
                 dataEmpUpdate.setAddress(request.getAddress());
                 dataEmpUpdate.setPhoneNumber(request.getPhoneNumber());
                 dataEmpUpdate.setNik(request.getNik());
                 dataEmpUpdate.setIsAktif(request.getIsAktif());
                 dataEmpUpdate.setPosition(request.getPosition());
-                DataEmployee dataEmpSave = dataEmployeeRepository.save(dataEmpUpdate);
-
-                Helper.ok("Data berhasil diperbaharui", EmployeeResponse.builder()
-                        .employeeId(emSave.getEmployeeId())
-                        .firstName(emSave.getFirstName())
-                        .lastName(emSave.getLastName())
-                        .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
-                        .email(emSave.getEmail())
-                        .address(dataEmpSave.getAddress())
-                        .phoneNumber(dataEmpSave.getPhoneNumber())
-                        .nik(dataEmpSave.getNik())
-                        .isAktif(dataEmpSave.getIsAktif())
-                        .position(dataEmpSave.getPosition())
-                        .build());
-                return BaseResponse.ok("Data berhasil disimpan", EmployeeResponse.builder()
-                        .employeeId(emSave.getEmployeeId())
-                        .firstName(emSave.getFirstName())
-                        .lastName(emSave.getLastName())
-                        .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
-                        .email(emSave.getEmail())
-                        .address(dataEmpSave.getAddress())
-                        .phoneNumber(dataEmpSave.getPhoneNumber())
-                        .nik(dataEmpSave.getNik())
-                        .isAktif(dataEmpSave.getIsAktif())
-                        .position(dataEmpSave.getPosition())
-                        .build());
+                dataEmpUpdate.setUpdatedAt(Helper.currentDate());
+                dataEmpUpdate.setUpdatedBy(employeeData.getEmployeeId());
+                dataEmpSave = dataEmployeeRepository.save(dataEmpUpdate);
             }
+            emSave = setEmployee(request, employeeData, employee);
+
+            dataEmpUpdate = DataEmployee.builder()
+                    .employeeId(emSave.getEmployeeId())
+                    .address(request.getAddress())
+                    .phoneNumber(request.getPhoneNumber())
+                    .nik(request.getNik())
+                    .isAktif(request.getIsAktif())
+                    .position(request.getPosition())
+                    .updatedAt(Helper.currentDate())
+                    .updatedBy(employeeData.getEmployeeId())
+                    .build();
+            dataEmpSave = dataEmployeeRepository.save(dataEmpUpdate);
+
+            Helper.ok("Data berhasil diperbaharui");
+
+            return BaseResponse.ok("Data berhasil diperbaharui", EmployeeResponse.builder()
+                    .employeeId(emSave.getEmployeeId())
+                    .firstName(emSave.getFirstName())
+                    .lastName(emSave.getLastName())
+                    .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
+                    .email(emSave.getEmail())
+                    .username(emSave.getUsername())
+                    .address(dataEmpSave.getAddress())
+                    .phoneNumber(dataEmpSave.getPhoneNumber())
+                    .nik(dataEmpSave.getNik())
+                    .isAktif(dataEmpSave.getIsAktif())
+                    .position(dataEmpSave.getPosition())
+                    .build());
+
         }
+        return BaseResponse.error("Select employee ID first");
+    }
 
-        Employee emCreate = Employee.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .build();
-        Employee emSave = employeeRepository.save(emCreate);
-
-        DataEmployee dataEmpCreate = DataEmployee.builder()
-                .employeeId(emSave.getEmployeeId())
-                .address(request.getAddress())
-                .phoneNumber(request.getPhoneNumber())
-                .nik(request.getNik())
-                .isAktif(request.getIsAktif())
-                .position(request.getPosition())
-                .build();
-        DataEmployee dataEmpSave = dataEmployeeRepository.save(dataEmpCreate);
-
-        Helper.ok("Data berhasil ditambah", EmployeeResponse.builder()
-                .employeeId(emSave.getEmployeeId())
-                .firstName(emSave.getFirstName())
-                .lastName(emSave.getLastName())
-                .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
-                .email(emSave.getEmail())
-                .address(dataEmpSave.getAddress())
-                .phoneNumber(dataEmpSave.getPhoneNumber())
-                .nik(dataEmpSave.getNik())
-                .isAktif(dataEmpSave.getIsAktif())
-                .position(dataEmpSave.getPosition())
-                .build());
-        return BaseResponse.ok("Data berhasil disimpan", EmployeeResponse.builder()
-                .employeeId(emSave.getEmployeeId())
-                .firstName(emSave.getFirstName())
-                .lastName(emSave.getLastName())
-                .fullName(Helper.fullName(emSave.getFirstName(), emSave.getLastName()))
-                .email(emSave.getEmail())
-                .address(dataEmpSave.getAddress())
-                .phoneNumber(dataEmpSave.getPhoneNumber())
-                .nik(dataEmpSave.getNik())
-                .isAktif(dataEmpSave.getIsAktif())
-                .position(dataEmpSave.getPosition())
-                .build());
+    private Employee setEmployee(EmployeeSaveRequest request, EmployeeData employeeData, Optional<Employee> employee) {
+        Employee emUpdate = new Employee();
+        if (employee.isPresent()) {
+            emUpdate = employee.get();
+            emUpdate.setFirstName(request.getFirstName());
+            emUpdate.setLastName(request.getLastName());
+            emUpdate.setEmail(request.getEmail());
+            emUpdate.setUsername(request.getUsername());
+            emUpdate.setUpdatedAt(Helper.currentDate());
+            emUpdate.setUpdatedBy(employeeData.getEmployeeId());
+        }
+        return employeeRepository.save(emUpdate);
     }
 
 }

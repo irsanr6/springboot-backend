@@ -84,7 +84,7 @@ public class Helper {
         deflater.finish();
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] tmp = new byte[4*1024];
+        byte[] tmp = new byte[4 * 1024];
         while (!deflater.finished()) {
             int size = deflater.deflate(tmp);
             outputStream.write(tmp, 0, size);
@@ -97,12 +97,11 @@ public class Helper {
     }
 
 
-
     public static byte[] decompressImage(byte[] data) {
         Inflater inflater = new Inflater();
         inflater.setInput(data);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] tmp = new byte[4*1024];
+        byte[] tmp = new byte[4 * 1024];
         try {
             while (!inflater.finished()) {
                 int count = inflater.inflate(tmp);
@@ -115,7 +114,7 @@ public class Helper {
     }
 
     public static String traversWordByWord(String awkward) {
-        String delimiter = " "+":"+"+"+"!"+"@"+"?"+"/"+"*"+"&"+"%"+"$"+"#"+"="+"-"+"_";
+        String delimiter = " " + ":" + "+" + "!" + "@" + "?" + "/" + "*" + "&" + "%" + "$" + "#" + "=" + "-" + "_";
         List<String> news = new ArrayList<>();
         StringTokenizer st = new StringTokenizer(awkward, delimiter);
         while (st.hasMoreTokens()) {
@@ -128,13 +127,17 @@ public class Helper {
         return StringUtils.lowerCase(words);
     }
 
-    public static String encodeString(String password) {
-        return Base64.getEncoder().encodeToString(password.getBytes());
-    }
+//    public static String encodeString(String password) {
+//        return Base64.getEncoder().encodeToString(password.getBytes());
+//    }
+//
+//    public static String decodeString(String passEncode) {
+//        byte[] decodedBytes = Base64.getDecoder().decode(passEncode);
+//        return new String(decodedBytes);
+//    }
 
-    public static String decodeString(String passEncode) {
-        byte[] decodedBytes = Base64.getDecoder().decode(passEncode);
-        return new String(decodedBytes);
+    public static boolean isNullOrEmptyMap(Map<?, ?> map) {
+        return (map == null || map.isEmpty());
     }
 
 }

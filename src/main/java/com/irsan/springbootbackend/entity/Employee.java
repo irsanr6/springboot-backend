@@ -2,9 +2,11 @@ package com.irsan.springbootbackend.entity;
 
 //import com.irsan.springbootbackend.listener.EmployeeAuditTrailListener;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author: Irsan Ramadhan
@@ -32,6 +34,14 @@ public class Employee {
     private String password;
     @Column(name = "encode_password")
     private String encodePassword;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Jakarta")
+    @Column(name = "created_at")
+    private Date createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Jakarta")
+    @Column(name = "updated_at")
+    private Date updatedAt;
+    @Column(name = "updated_by")
+    private Long updatedBy;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", referencedColumnName = "employee_id",

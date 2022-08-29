@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/v1")
 public class AuthController {
@@ -20,13 +22,13 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public BaseResponse<?> registerUser(@RequestBody SignUpRequest signUpRequests) {
+    public BaseResponse<?> registerUser(@RequestBody SignUpRequest signUpRequests) throws IOException {
         return authService.registerUser(signUpRequests);
     }
 
     @GetMapping("/checkPassword")
     public BaseResponse<?> checkPassword(@RequestParam(required = false) String employeeId,
-                                         @RequestParam(required = false) String searchGlobal) {
+                                         @RequestParam(required = false) String searchGlobal) throws IOException {
         return authService.checkPassword(employeeId, searchGlobal);
     }
 }
